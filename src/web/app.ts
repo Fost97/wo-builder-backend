@@ -1,7 +1,10 @@
-import express from "express";
-import prisma from "../db/index.js";
-import { Prisma } from "@prisma/client";
 import cors from "cors";
+import express from "express";
+
+import prisma from "../db/index.js";
+
+import { Prisma } from "@prisma/client";
+import Workout from "../services/workout.js";
 
 const app = express();
 
@@ -64,7 +67,7 @@ app.delete("/athletes/:id", async (req, res) => {
   res.json();
 });
 
-app.get("/atheltes/:id/workouts", async (req, res) => {
+app.get("/athletes/:id/workouts", async (req, res) => {
   const athleteId = Number(req.params.id);
   const trainingPrograms = await prisma.trainingProgram.findMany({ where: { athleteId } });
   res.json(trainingPrograms);
@@ -72,14 +75,10 @@ app.get("/atheltes/:id/workouts", async (req, res) => {
 
 app.post("/athletes/:id/workouts", async (req, res) => {
   const athleteId = Number(req.params.id);
-  const program = req.body.program;
   const label = req.body.label;
-  const weeks = req.body.weeks;
-  const days = req.body.days;
-  const step = req.body.step;
-  const trainingProgram = await prisma.trainingProgram.create({
-    data: { program, athleteId, label, weeks, days, step },
-  });
+  const weeks = Number(req.body.weeks);
+  const days = Number(req.body.days);
+  const trainingProgram = await Workout.create(athleteId, label, weeks, days);
   res.status(201).json(trainingProgram);
 });
 
@@ -129,14 +128,15 @@ app.put("/workouts/:id", async (req, res) => {
   const program = req.body.program;
   const label = req.body.label;
   const weeks = req.body.weeks;
-  const days = req.body.days;
   const step = req.body.step;
 
-  if (program) data.program = program;
+  if (program) {
+    data.program = program;
+    data.days = program.length;
+  }
   if (label) data.label = label;
   if (weeks) data.weeks = weeks;
-  if (days) data.days = days;
-  if (step) data.step = step;
+  if (step !== null && step !== undefined) data.step = step;
   if (!Object.keys(data).length) {
     res.end();
     return;
