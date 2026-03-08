@@ -1,10 +1,10 @@
 import cors from "cors";
 import express from "express";
 
-import prisma from "../db/index.js";
+import prisma from "../lib/index.js";
 
-import { Prisma } from "@prisma/client";
 import Workout from "../services/workout.js";
+import { Prisma } from "../generated/prisma/client";
 
 const app = express();
 

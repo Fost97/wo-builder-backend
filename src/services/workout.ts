@@ -1,4 +1,4 @@
-import prisma from "../db/index.js";
+import prisma from "../lib/index.js";
 
 export default class Workout {
   private static emptyRow() {
