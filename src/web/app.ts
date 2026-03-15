@@ -4,7 +4,7 @@ import express from "express";
 import prisma from "../lib/index.js";
 
 import Workout from "../services/workout.js";
-import { Prisma } from "../generated/prisma/client";
+import { Prisma } from "../generated/prisma/client.js";
 
 const app = express();
 
