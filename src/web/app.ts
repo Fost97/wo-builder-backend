@@ -16,7 +16,8 @@ app.get("/", (req, res) => res.send("OK"));
 
 app.get("/athletes", async (req, res) => {
   const athletes = await prisma.athlete.findMany();
-  res.json(athletes);
+  const athletesCount = await prisma.athlete.count();
+  res.json({ count: athletesCount, rows: athletes });
 });
 
 app.post("/athletes", async (req, res) => {
@@ -70,7 +71,8 @@ app.delete("/athletes/:id", async (req, res) => {
 app.get("/athletes/:id/workouts", async (req, res) => {
   const athleteId = Number(req.params.id);
   const trainingPrograms = await prisma.trainingProgram.findMany({ where: { athleteId } });
-  res.json(trainingPrograms);
+  const trainingProgramsCount = await prisma.trainingProgram.count({ where: { athleteId } });
+  res.json({ count: trainingProgramsCount, rows: trainingPrograms });
 });
 
 app.post("/athletes/:id/workouts", async (req, res) => {
