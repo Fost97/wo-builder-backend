@@ -5,6 +5,15 @@ import prisma from "../lib/index.js";
 
 import Workout from "../services/workout.js";
 import { Prisma } from "../generated/prisma/client.js";
+import {
+  AthleteCreationSchema,
+  AthleteUpdateSchema,
+} from "./validation/Athlete.js";
+
+import {
+  TrainingProgramCreationSchema,
+  TrainingProgramUpdateSchema,
+} from "./validation/TrainingProgram.js";
 
 const app = express();
 
@@ -21,9 +30,13 @@ app.get("/athletes", async (req, res) => {
 });
 
 app.post("/athletes", async (req, res) => {
-  const { name, surname } = req.body;
+  const result = AthleteCreationSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).jsonp(result.error.issues)
+  }
+
   const athlete = await prisma.athlete.create({
-    data: { name, surname },
+    data: { ...result.data },
   });
   res.status(201).json(athlete);
 });
@@ -35,17 +48,17 @@ app.get("/athletes/:id", async (req, res) => {
 });
 
 app.put("/athletes/:id", async (req, res) => {
-  const data: Record<string, unknown> = {};
+  const result = AthleteUpdateSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).jsonp(result.error.issues)
+  }
+  
   const id = Number(req.params.id);
-  const { name, surname } = req.body;
-  if (name) data.name = name;
-  if (surname) data.surname = surname;
-
+  const data: Record<string, unknown> = Object.fromEntries(Object.entries(result.data).filter(([_, value]) => value !== undefined));
   if (!Object.keys(data).length) {
     res.end();
     return;
   }
-
   const athlete = await prisma.athlete.update({
     data,
     where: { id },

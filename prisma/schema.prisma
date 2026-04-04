@@ -7,22 +7,32 @@ datasource db {
   provider = "postgresql"
 }
 
+enum AthleteStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model Athlete {
   id              Int               @id @default(autoincrement())
   name            String
   surname         String
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+  status          AthleteStatus     @default(ACTIVE)
   TrainingProgram TrainingProgram[]
 }
 
 model TrainingProgram {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   label     String
   program   Json
   days      Int
   weeks     Int
   step      Int
+  // (theoretical) Start and end date of the training program
+  startDate DateTime?
+  endDate   DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   athleteId Int
