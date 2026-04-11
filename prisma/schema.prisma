@@ -29,6 +29,13 @@ model TrainingProgram {
   days      Int
   weeks     Int
   step      Int
+
+  /*
+    indicates whether the training program is pinned by the athlete (i.e. it will be shown in the athlete's dashboard)
+    Only one training program can be pinned at a time for each athlete.
+    This is not enforced at the database level, but it is the intended behavior.
+  */
+  pinned   Boolean   @default(false)
   // (theoretical) Start and end date of the training program
   startDate DateTime?
   endDate   DateTime?

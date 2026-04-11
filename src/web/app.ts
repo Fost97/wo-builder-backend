@@ -24,7 +24,7 @@ app.use(express.json());
 app.get("/", (req, res) => res.send("OK"));
 
 app.get("/athletes", async (req, res) => {
-  const athletes = await prisma.athlete.findMany();
+  const athletes = await prisma.athlete.findMany({ orderBy: { id: "asc" } });
   const athletesCount = await prisma.athlete.count();
   res.json({ count: athletesCount, rows: athletes });
 });
@@ -66,6 +66,7 @@ app.put("/athletes/:id", async (req, res) => {
   res.json(athlete);
 });
 
+
 app.delete("/athletes/:id", async (req, res) => {
   const id = Number(req.params.id);
   // First check if the athlete has training programs
@@ -88,12 +89,20 @@ app.get("/athletes/:id/workouts", async (req, res) => {
   res.json({ count: trainingProgramsCount, rows: trainingPrograms });
 });
 
+app.get("/athletes/:id/workouts/pinned", async (req, res) => {
+  const athleteId = Number(req.params.id);
+  const trainingProgram = await prisma.trainingProgram.findFirst({ where: { athleteId, pinned: true } });
+  res.json(trainingProgram);
+});
+
 app.post("/athletes/:id/workouts", async (req, res) => {
   const athleteId = Number(req.params.id);
   const label = req.body.label;
   const weeks = Number(req.body.weeks);
   const days = Number(req.body.days);
-  const trainingProgram = await Workout.create(athleteId, label, weeks, days);
+  const startDate = new Date(req.body.startDate);
+  const endDate = new Date(req.body.endDate);
+  const trainingProgram = await Workout.create(athleteId, label, weeks, days, startDate, endDate);
   res.status(201).json(trainingProgram);
 });
 
@@ -128,6 +137,8 @@ app.post("/workouts/:id/clone", async (req, res) => {
       weeks: trainingProgramToClone.weeks,
       days: trainingProgramToClone.days,
       step: trainingProgramToClone.step,
+      startDate: trainingProgramToClone.startDate,
+      endDate: trainingProgramToClone.endDate,
       program: trainingProgramToClone.program as Prisma.InputJsonValue,
       athleteId: trainingProgramToClone.athleteId,
     },
@@ -144,6 +155,8 @@ app.put("/workouts/:id", async (req, res) => {
   const label = req.body.label;
   const weeks = req.body.weeks;
   const step = req.body.step;
+  const startDate = req.body.startDate;
+  const endDate = req.body.endDate;
 
   if (program) {
     data.program = program;
@@ -152,6 +165,8 @@ app.put("/workouts/:id", async (req, res) => {
   if (label) data.label = label;
   if (weeks) data.weeks = weeks;
   if (step !== null && step !== undefined) data.step = step;
+  if (startDate) data.startDate = startDate;
+  if (endDate) data.endDate = endDate;
   if (!Object.keys(data).length) {
     res.end();
     return;
@@ -162,6 +177,29 @@ app.put("/workouts/:id", async (req, res) => {
     where: { id: workoutId },
   });
   res.json(trainingProgram);
+});
+
+app.put("/workouts/:id/pin", async (req, res) => {
+  const workoutId = Number(req.params.id);
+  
+  const trainingProgram = await prisma.trainingProgram.findFirst({
+    where: { id: workoutId }
+  })
+  if (!trainingProgram) {
+    return res.status(404).end()
+  }
+
+  await prisma.trainingProgram.updateMany({
+    data: { pinned: false },
+    where: { athleteId: trainingProgram.athleteId, pinned: true }
+  })
+
+  await prisma.trainingProgram.update({
+    data: { pinned: true },
+    where: { id: workoutId }
+  });
+
+  res.end();
 });
 
 app.delete("/workout/:id", async (req, res) => {
